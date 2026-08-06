@@ -23,8 +23,11 @@ public class Product {
     @Column(unique = true, nullable = false)
     private String name;
 
-    @Column(unique = true, length = 5)
+    @Column(unique = true, length = 5, nullable = false)
     private String code;
+
+    @Column(length = 3, nullable = false)
+    private int categoryNumber;
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)

@@ -20,17 +20,22 @@ public class ProductService {
         this.productRepository = productRepository;
     }
 
-    //NOT FINISHED
-    public Product generateCode(Product product) {
-        return product;
-    }
-
     //CREATE
     public ProductResponseDTO createProduct(ProductRequestDTO dto) {
         Product product = mapper.toEntity(dto);
         if(productRepository.existsByName(product.getName())) {
             throw new IllegalArgumentException("Product name already exists");
         }
+
+        String categoryCode = product.getCategoryCode();
+        //ASSIGN CATEGORY CODE
+        int maxCategoryNumber = productRepository.findMaxCategoryNumber(categoryCode);
+        int nextCategoryNumber = maxCategoryNumber + 1;
+        product.setCategoryNumber(nextCategoryNumber);
+        //ASSIGN CODE
+        String code = categoryCode + nextCategoryNumber;
+        product.setCode(code);
+
         Product saved = productRepository.save(product);
         return mapper.toResponseDTO(saved);
     }
