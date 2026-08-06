@@ -20,8 +20,9 @@ public class ProductService {
         this.productRepository = productRepository;
     }
 
+    //NOT FINISHED
     public Product generateCode(Product product) {
-
+        return product;
     }
 
     //CREATE
