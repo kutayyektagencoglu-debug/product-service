@@ -29,7 +29,6 @@ public class Product {
     @Column(length = 3, nullable = false)
     private int categoryNumber;
 
-    @Enumerated(EnumType.STRING)
     @Column(nullable = false)
     private String categoryCode;
 
