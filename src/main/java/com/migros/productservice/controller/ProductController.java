@@ -33,66 +33,78 @@ public class ProductController {
         return productService.getAllCategories();
     }
     //READ BY ID
-    @GetMapping("/{id}")
+    @GetMapping("/id/{id}")
     public  ProductResponseDTO getProductById(@PathVariable Long id) {
         return productService.getProductById(id);
     }
     // READ BY NAME
-    @GetMapping("/{name}")
+    @GetMapping("/name/{name}")
     public ProductResponseDTO getProductByName(@PathVariable String name) {
 
         return productService.getProductByName(name);
     }
 
     //READ BY CODE
-    @GetMapping("/{code}")
+    @GetMapping("/code/{code}")
     public ProductResponseDTO getProductByCode(@PathVariable String code){
 
         return productService.getProductByCode(code);
     }
 
     //READ BY UNIT
-    @GetMapping("/{unit}")
+    @GetMapping("/unit/{unit}")
     public List<ProductResponseDTO> getProductByUnit(@PathVariable UnitType unit){
 
         return productService.getProductByUnit(unit);
     }
 
     //READ BY CATEGORY CODE
-    @GetMapping("/{categoryCode}")
+    @GetMapping("/categoryCode/{categoryCode}")
     public List<ProductResponseDTO> getProductByCategoryCode(@PathVariable String categoryCode){
 
         return productService.getProductByCategoryCode(categoryCode);
     }
 
     //READ BY BRAND
-    @GetMapping("/{brand}")
+    @GetMapping("/brand/{brand}")
     public List<ProductResponseDTO> getProductByBrand(@PathVariable String brand){
 
         return productService.getProductByBrand(brand);
     }
 
     // UPDATE
-    @PutMapping("/{name}")
-    public ProductResponseDTO updateProduct(@PathVariable String name, @RequestBody ProductRequestDTO updatedDTO) {
+    @PutMapping("/id/{id}")
+    public ProductResponseDTO updateProductById(@PathVariable Long id, @RequestBody ProductRequestDTO updatedDTO) {
 
-        return productService.updateProduct(name, updatedDTO);
+        return productService.updateProductById(id, updatedDTO);
+    }
+
+    @PutMapping("/name/{name}")
+    public ProductResponseDTO updateProductByName(@PathVariable String name, @RequestBody ProductRequestDTO updatedDTO) {
+
+        return productService.updateProductByName(name, updatedDTO);
+    }
+
+    @PutMapping("/code/{code}")
+    public ProductResponseDTO updateProductByCode(@PathVariable String code, @RequestBody ProductRequestDTO updatedDTO) {
+
+        return productService.updateProductByCode(code, updatedDTO);
     }
 
     // DELETE
-    @DeleteMapping("/{id}")
+    @DeleteMapping("/id/{id}")
     public void deleteProductById(@PathVariable Long id) {
 
         productService.deleteProductById(id);
     }
 
-    @DeleteMapping("/{name}")
+    @DeleteMapping("/name/{name}")
     public void deleteProductByName(@PathVariable String name) {
 
         productService.deleteProductByName(name);
     }
 
-    @DeleteMapping("/{code}")
+    @DeleteMapping("/code/{code}")
     public void deleteProductByCode(@PathVariable String code) {
 
         productService.deleteProductByCode(code);

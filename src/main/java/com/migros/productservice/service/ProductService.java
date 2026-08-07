@@ -20,13 +20,7 @@ public class ProductService {
         this.productRepository = productRepository;
     }
 
-    //CREATE
-    public ProductResponseDTO createProduct(ProductRequestDTO dto) {
-        Product product = mapper.toEntity(dto);
-        if(productRepository.existsByName(product.getName())) {
-            throw new IllegalArgumentException("Product name already exists");
-        }
-
+    public void assignCode(Product product) {
         String categoryCode = product.getCategoryCode();
         //ASSIGN CATEGORY CODE
         int maxCategoryNumber = productRepository.findMaxCategoryNumber(categoryCode);
@@ -35,6 +29,15 @@ public class ProductService {
         //ASSIGN CODE
         String code = categoryCode + nextCategoryNumber;
         product.setCode(code);
+    }
+    //CREATE
+    public ProductResponseDTO createProduct(ProductRequestDTO dto) {
+        Product product = mapper.toEntity(dto);
+        if(productRepository.existsByName(product.getName())) {
+            throw new IllegalArgumentException("Product name already exists");
+        }
+        //add method that checks whether categoryCode is valid
+        assignCode(product);
 
         Product saved = productRepository.save(product);
         return mapper.toResponseDTO(saved);
@@ -84,13 +87,44 @@ public class ProductService {
     }
 
     //UPDATE
-    public ProductResponseDTO updateProduct(String name, ProductRequestDTO desiredDTO) {
-        Product existingProduct = productRepository.findByName(name)
-                .orElseThrow(() -> new IllegalArgumentException("Product not found: " + name));
+    public void updateProduct(Product existingProduct, ProductRequestDTO desiredDTO) {
+        //add method that checks whether categoryCode is valid
         existingProduct.setName(desiredDTO.getName());
         existingProduct.setUnit(desiredDTO.getUnit());
         existingProduct.setBrand(desiredDTO.getBrand());
-        existingProduct.setCategoryCode(desiredDTO.getCategoryCode());
+
+        String categoryCode = desiredDTO.getCategoryCode();
+        if(!categoryCode.equals(existingProduct.getCategoryCode())) {
+            existingProduct.setCategoryCode(categoryCode);
+            assignCode(existingProduct);
+        }
+    }
+
+    public ProductResponseDTO updateProductById(Long id, ProductRequestDTO desiredDTO) {
+        Product existingProduct = productRepository.findById(id)
+                .orElseThrow(() -> new IllegalArgumentException("Product not found: " + id));
+
+        updateProduct(existingProduct, desiredDTO);
+
+        Product saved = productRepository.save(existingProduct);
+        return mapper.toResponseDTO(saved);
+    }
+
+    public ProductResponseDTO updateProductByName(String name, ProductRequestDTO desiredDTO) {
+        Product existingProduct = productRepository.findByName(name)
+                .orElseThrow(() -> new IllegalArgumentException("Product not found: " + name));
+
+        updateProduct(existingProduct, desiredDTO);
+
+        Product saved = productRepository.save(existingProduct);
+        return mapper.toResponseDTO(saved);
+    }
+
+    public ProductResponseDTO updateProductByCode(String code, ProductRequestDTO desiredDTO) {
+        Product existingProduct = productRepository.findByCode(code)
+                .orElseThrow(() -> new IllegalArgumentException("Product not found: " + code));
+
+        updateProduct(existingProduct, desiredDTO);
 
         Product saved = productRepository.save(existingProduct);
         return mapper.toResponseDTO(saved);
