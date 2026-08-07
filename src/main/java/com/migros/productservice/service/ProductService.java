@@ -1,6 +1,7 @@
 package com.migros.productservice.service;
 
 import com.migros.productservice.Model.Product;
+import com.migros.productservice.client.CategoryClient;
 import com.migros.productservice.dto.ProductRequestDTO;
 import com.migros.productservice.dto.ProductResponseDTO;
 import com.migros.productservice.enums.UnitType;
@@ -14,13 +15,18 @@ import java.util.List;
 public class ProductService {
     private final ProductRepository productRepository;
     private final ProductMapper mapper;
+    private final CategoryClient categoryClient;
 
-    public ProductService(ProductRepository productRepository, ProductMapper mapper) {
+    public ProductService(ProductRepository productRepository, ProductMapper mapper, CategoryClient categoryClient) {
         this.mapper = mapper;
         this.productRepository = productRepository;
+        this.categoryClient = categoryClient;
     }
 
     public void assignCode(Product product) {
+        if(!categoryClient.verifyCategoryCode(product.getCategoryCode())) {
+            throw new IllegalArgumentException("Invalid category code (Category code has to be 2 letters long)");
+        }
         String categoryCode = product.getCategoryCode();
         //ASSIGN CATEGORY CODE
         int maxCategoryNumber = productRepository.findMaxCategoryNumber(categoryCode);
