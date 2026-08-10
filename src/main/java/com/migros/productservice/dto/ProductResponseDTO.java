@@ -8,6 +8,8 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
+import java.util.List;
+
 @NoArgsConstructor
 @AllArgsConstructor
 @Getter
@@ -25,4 +27,5 @@ public class ProductResponseDTO {
     private UnitType unit;
     @Size(min = 2, max = 2)
     private String categoryCode;
+    private List<BarcodeResponseDTO> barcodes;
 }
