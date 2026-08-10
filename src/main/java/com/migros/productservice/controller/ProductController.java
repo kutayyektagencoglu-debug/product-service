@@ -92,19 +92,7 @@ public class ProductController {
     }
 
     // DELETE
-    @DeleteMapping("/id/{id}")
-    public void deleteProductById(@PathVariable Long id) {
-
-        productService.deleteProductById(id);
-    }
-
-    @DeleteMapping("/name/{name}")
-    public void deleteProductByName(@PathVariable String name) {
-
-        productService.deleteProductByName(name);
-    }
-
-    @DeleteMapping("/code/{code}")
+    @DeleteMapping("/{code}")
     public void deleteProductByCode(@PathVariable String code) {
 
         productService.deleteProductByCode(code);

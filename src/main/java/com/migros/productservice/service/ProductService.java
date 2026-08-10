@@ -1,7 +1,9 @@
 package com.migros.productservice.service;
 
 import com.migros.productservice.Model.Product;
+import com.migros.productservice.client.BarcodeClient;
 import com.migros.productservice.client.CategoryClient;
+import com.migros.productservice.dto.BarcodeRequestDTO;
 import com.migros.productservice.dto.ProductRequestDTO;
 import com.migros.productservice.dto.ProductResponseDTO;
 import com.migros.productservice.enums.UnitType;
@@ -16,11 +18,14 @@ public class ProductService {
     private final ProductRepository productRepository;
     private final ProductMapper mapper;
     private final CategoryClient categoryClient;
+    private final BarcodeClient barcodeClient;
 
-    public ProductService(ProductRepository productRepository, ProductMapper mapper, CategoryClient categoryClient) {
+    public ProductService(ProductRepository productRepository, ProductMapper mapper,
+                          CategoryClient categoryClient, BarcodeClient barcodeClient) {
         this.mapper = mapper;
         this.productRepository = productRepository;
         this.categoryClient = categoryClient;
+        this.barcodeClient = barcodeClient;
     }
 
     public void assignCode(Product product) {
@@ -36,14 +41,19 @@ public class ProductService {
         String code = categoryCode + nextCategoryNumber;
         product.setCode(code);
     }
+
+    public void generateBarcode(Product product) {
+        BarcodeRequestDTO barcodeRequestDTO = new BarcodeRequestDTO(product.getCode());
+        barcodeClient.createBarcode(barcodeRequestDTO);
+    }
     //CREATE
     public ProductResponseDTO createProduct(ProductRequestDTO dto) {
         Product product = mapper.toEntity(dto);
         if(productRepository.existsByName(product.getName())) {
             throw new IllegalArgumentException("Product name already exists");
         }
-        //add method that checks whether categoryCode is valid
         assignCode(product);
+        generateBarcode(product);
 
         Product saved = productRepository.save(product);
         return mapper.toResponseDTO(saved);
@@ -96,13 +106,21 @@ public class ProductService {
     public void updateProduct(Product existingProduct, ProductRequestDTO desiredDTO) {
         //add method that checks whether categoryCode is valid
         existingProduct.setName(desiredDTO.getName());
-        existingProduct.setUnit(desiredDTO.getUnit());
         existingProduct.setBrand(desiredDTO.getBrand());
+
+        UnitType unit = existingProduct.getUnit();
+        existingProduct.setUnit(desiredDTO.getUnit());
 
         String categoryCode = desiredDTO.getCategoryCode();
         if(!categoryCode.equals(existingProduct.getCategoryCode())) {
             existingProduct.setCategoryCode(categoryCode);
             assignCode(existingProduct);
+
+            barcodeClient.deleteBarcode(existingProduct.getCode());
+            generateBarcode(existingProduct);
+        } else if(!(unit == desiredDTO.getUnit())) {
+            barcodeClient.deleteBarcode(existingProduct.getCode());
+            generateBarcode(existingProduct);
         }
     }
 
@@ -137,24 +155,11 @@ public class ProductService {
     }
 
     //DELETE
-    public void deleteProductById(Long id) {
-        if(!productRepository.existsById(id)) {
-            throw new IllegalArgumentException("Product not found: " + id);
-        }
-        productRepository.deleteById(id);
-    }
-
-    public void deleteProductByName(String name) {
-        if(!productRepository.existsByName(name)) {
-            throw new IllegalArgumentException("Product not found: " + name);
-        }
-        productRepository.deleteByName(name);
-    }
-
     public void deleteProductByCode(String code) {
         if(!productRepository.existsByCode(code)) {
             throw new IllegalArgumentException("Product not found: " + code);
         }
+        barcodeClient.deleteBarcode(code);
         productRepository.deleteByCode(code);
     }
 }
