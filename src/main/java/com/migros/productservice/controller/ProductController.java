@@ -28,9 +28,9 @@ public class ProductController {
 
     // READ ALL
     @GetMapping
-    public List<ProductResponseDTO> getAllCategories() {
+    public List<ProductResponseDTO> getAllProducts() {
 
-        return productService.getAllCategories();
+        return productService.getAllProducts();
     }
     //READ BY ID
     @GetMapping("/id/{id}")

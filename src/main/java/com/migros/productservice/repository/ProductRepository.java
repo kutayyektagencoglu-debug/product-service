@@ -16,7 +16,7 @@ public interface ProductRepository extends JpaRepository<Product, Long> {
 
     Optional<Product> findByCode(String code);
     Optional<Product> findByName(String Name);
-    @Query("SELECT COALESCE(MAX(p.categoryNumber), 0) FROM Product p WHERE p.categoryCode = :categoryCode")
+    @Query("SELECT COALESCE(MAX(p.categoryNumber), 100) FROM Product p WHERE p.categoryCode = :categoryCode")
     int findMaxCategoryNumber(@Param("categoryCode") String categoryCode);
 
     List<Product> findByUnit(UnitType Unit);

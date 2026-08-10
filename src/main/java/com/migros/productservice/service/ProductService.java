@@ -50,7 +50,7 @@ public class ProductService {
     }
 
     //READ ALL
-    public List<ProductResponseDTO> getAllCategories(){
+    public List<ProductResponseDTO> getAllProducts(){
         List<Product> products = productRepository.findAll();
         return mapper.toResponseDTOList(products);
     }
