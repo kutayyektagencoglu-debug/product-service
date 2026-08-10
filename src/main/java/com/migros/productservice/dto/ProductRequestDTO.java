@@ -1,5 +1,6 @@
 package com.migros.productservice.dto;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
 import com.migros.productservice.enums.UnitType;
 import jakarta.validation.constraints.Size;
 import lombok.AllArgsConstructor;
@@ -13,6 +14,7 @@ import lombok.Setter;
 @Setter
 
 public class ProductRequestDTO {
+    @JsonProperty("productName")
     private String name;
     private String brand;
     private UnitType unit;
