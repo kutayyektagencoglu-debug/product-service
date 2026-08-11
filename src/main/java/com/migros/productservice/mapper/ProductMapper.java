@@ -8,7 +8,6 @@ import org.mapstruct.Mapper;
 import java.util.List;
 
 @Mapper(componentModel = "spring")
-
 public interface ProductMapper {
     ProductResponseDTO toResponseDTO(Product product);
     Product toEntity(ProductRequestDTO requestDTO);

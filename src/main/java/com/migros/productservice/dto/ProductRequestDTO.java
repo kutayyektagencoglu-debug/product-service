@@ -12,7 +12,6 @@ import lombok.Setter;
 @AllArgsConstructor
 @Getter
 @Setter
-
 public class ProductRequestDTO {
     @JsonProperty("productName")
     private String name;

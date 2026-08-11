@@ -12,7 +12,6 @@ import lombok.Setter;
 @AllArgsConstructor
 @Getter
 @Setter
-
 public class ProductResponseDTO {
     @JsonProperty("productId")
     private Long id;
