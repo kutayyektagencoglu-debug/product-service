@@ -11,8 +11,8 @@ import java.util.List;
 
 @FeignClient(name = "barcode-service", url = "http://localhost:8082")
 public interface BarcodeClient {
-    @PostMapping
+    @PostMapping("/api/v1/barcode")
     List<BarcodeResponseDTO> createBarcode(BarcodeRequestDTO barcodeRequestDTO);
-    @DeleteMapping("/productCode/{productCode}")
+    @DeleteMapping("/api/v1/barcode/productCode/{productCode}")
     void deleteBarcode(@PathVariable String productCode);
 }

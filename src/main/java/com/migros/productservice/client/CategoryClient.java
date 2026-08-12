@@ -6,6 +6,6 @@ import org.springframework.web.bind.annotation.PathVariable;
 
 @FeignClient(name = "category-service", url = "http://localhost:8081")
 public interface CategoryClient {
-    @GetMapping("/verify/{code}")
+    @GetMapping("/api/v1/category/verify/{code}")
     boolean verifyCategoryCode(@PathVariable String code);
 }
