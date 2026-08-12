@@ -4,6 +4,7 @@ import com.migros.productservice.dto.ProductRequestDTO;
 import com.migros.productservice.dto.ProductResponseDTO;
 import com.migros.productservice.enums.UnitType;
 import com.migros.productservice.service.ProductService;
+import jakarta.validation.Valid;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -21,7 +22,7 @@ public class ProductController {
 
     // CREATE
     @PostMapping
-    public ProductResponseDTO createProduct(@RequestBody ProductRequestDTO dto) {
+    public ProductResponseDTO createProduct(@Valid @RequestBody ProductRequestDTO dto) {
 
         return productService.createProduct(dto);
     }
@@ -73,26 +74,20 @@ public class ProductController {
     }
 
     // UPDATE
-    @PutMapping("/id/{id}")
-    public ProductResponseDTO updateProductById(@PathVariable Long id, @RequestBody ProductRequestDTO updatedDTO) {
-
-        return productService.updateProductById(id, updatedDTO);
-    }
-
     @PutMapping("/name/{name}")
-    public ProductResponseDTO updateProductByName(@PathVariable String name, @RequestBody ProductRequestDTO updatedDTO) {
+    public ProductResponseDTO updateProductByName(@PathVariable String name, @Valid @RequestBody ProductRequestDTO updatedDTO) {
 
         return productService.updateProductByName(name, updatedDTO);
     }
 
     @PutMapping("/code/{code}")
-    public ProductResponseDTO updateProductByCode(@PathVariable String code, @RequestBody ProductRequestDTO updatedDTO) {
+    public ProductResponseDTO updateProductByCode(@PathVariable String code, @Valid @RequestBody ProductRequestDTO updatedDTO) {
 
         return productService.updateProductByCode(code, updatedDTO);
     }
 
     // DELETE
-    @DeleteMapping("/{code}")
+    @DeleteMapping("/code/{code}")
     public void deleteProductByCode(@PathVariable String code) {
 
         productService.deleteProductByCode(code);

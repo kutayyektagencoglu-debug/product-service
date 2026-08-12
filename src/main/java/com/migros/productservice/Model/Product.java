@@ -37,5 +37,4 @@ public class Product {
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
     private UnitType unit;
-
 }

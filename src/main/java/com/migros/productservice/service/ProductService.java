@@ -36,14 +36,19 @@ public class ProductService {
         //ASSIGN CATEGORY CODE
         int maxCategoryNumber = productRepository.findMaxCategoryNumber(categoryCode);
         int nextCategoryNumber = maxCategoryNumber + 1;
+        if(nextCategoryNumber > 999) {
+            throw new IllegalStateException("Not enough unique category codes");
+        }
         product.setCategoryNumber(nextCategoryNumber);
         //ASSIGN CODE
-        String code = categoryCode + nextCategoryNumber;
+        String code = categoryCode + String.format("%03d", nextCategoryNumber);
         product.setCode(code);
     }
 
     public void generateBarcode(Product product) {
-        BarcodeRequestDTO barcodeRequestDTO = new BarcodeRequestDTO(product.getCode());
+        BarcodeRequestDTO barcodeRequestDTO = new BarcodeRequestDTO();
+        barcodeRequestDTO.setProductCode(product.getCode());
+        barcodeRequestDTO.setUnit(product.getUnit());
         barcodeClient.createBarcode(barcodeRequestDTO);
     }
     //CREATE
@@ -122,16 +127,6 @@ public class ProductService {
             barcodeClient.deleteBarcode(existingProduct.getCode());
             generateBarcode(existingProduct);
         }
-    }
-
-    public ProductResponseDTO updateProductById(Long id, ProductRequestDTO desiredDTO) {
-        Product existingProduct = productRepository.findById(id)
-                .orElseThrow(() -> new IllegalArgumentException("Product not found: " + id));
-
-        updateProduct(existingProduct, desiredDTO);
-
-        Product saved = productRepository.save(existingProduct);
-        return mapper.toResponseDTO(saved);
     }
 
     public ProductResponseDTO updateProductByName(String name, ProductRequestDTO desiredDTO) {
