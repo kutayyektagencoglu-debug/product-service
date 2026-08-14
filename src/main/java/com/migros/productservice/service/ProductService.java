@@ -9,6 +9,8 @@ import com.migros.productservice.dto.ProductResponseDTO;
 import com.migros.productservice.enums.UnitType;
 import com.migros.productservice.mapper.ProductMapper;
 import com.migros.productservice.repository.ProductRepository;
+import com.migros.commonerror.exception.BusinessException;
+import jakarta.transaction.Transactional;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -30,14 +32,14 @@ public class ProductService {
 
     public void assignCode(Product product) {
         if(!categoryClient.verifyCategoryCode(product.getCategoryCode())) {
-            throw new IllegalArgumentException("Invalid category code (Category code has to be 2 letters long)");
+            throw new BusinessException("INVALID_CATEGORY_CODE", "Category code is invalid", 400);
         }
         String categoryCode = product.getCategoryCode();
         //ASSIGN CATEGORY CODE
         int maxCategoryNumber = productRepository.findMaxCategoryNumber(categoryCode);
         int nextCategoryNumber = maxCategoryNumber + 1;
         if(nextCategoryNumber > 999) {
-            throw new IllegalStateException("Not enough unique category codes");
+            throw new BusinessException("CATEGORY_NUMBER_EXHAUSTED", "Category has reached its maximum allowed number of products", 409);
         }
         product.setCategoryNumber(nextCategoryNumber);
         //ASSIGN CODE
@@ -55,7 +57,7 @@ public class ProductService {
     public ProductResponseDTO createProduct(ProductRequestDTO dto) {
         Product product = mapper.toEntity(dto);
         if(productRepository.existsByName(product.getName())) {
-            throw new IllegalArgumentException("Product name already exists");
+            throw new BusinessException("PRODUCT_NAME_EXISTS", "Product name already exists", 409);
         }
         assignCode(product);
         generateBarcode(product);
@@ -72,20 +74,20 @@ public class ProductService {
     //READ BY ID
     public ProductResponseDTO getProductById(Long id) {
         Product product= productRepository.findById(id)
-                .orElseThrow(() -> new IllegalArgumentException("Product not found: " + id));
+                .orElseThrow(() -> new BusinessException("PRODUCT_NOT_FOUND", "Product not found: " + id, 404));
         return mapper.toResponseDTO(product);
     }
     //READ BY NAME
     public ProductResponseDTO getProductByName(String name) {
         Product product = productRepository.findByName(name)
-                .orElseThrow(() -> new IllegalArgumentException("Product not found: " + name));
+                .orElseThrow(() -> new BusinessException("PRODUCT_NOT_FOUND", "Product not found: " + name, 404));
         return mapper.toResponseDTO(product);
     }
 
     //READ BY CODE
     public ProductResponseDTO getProductByCode(String code){
         Product product = productRepository.findByCode(code)
-                .orElseThrow(() ->  new IllegalArgumentException("Product not found: " + code));
+                .orElseThrow(() ->  new BusinessException("PRODUCT_NOT_FOUND", "Product not found: " + code, 404));
         return mapper.toResponseDTO(product);
     }
 
@@ -108,6 +110,7 @@ public class ProductService {
     }
 
     //UPDATE
+    @Transactional
     public void updateProduct(Product existingProduct, ProductRequestDTO desiredDTO) {
         //add method that checks whether categoryCode is valid
         existingProduct.setName(desiredDTO.getName());
@@ -128,20 +131,20 @@ public class ProductService {
             generateBarcode(existingProduct);
         }
     }
-
+    @Transactional
     public ProductResponseDTO updateProductByName(String name, ProductRequestDTO desiredDTO) {
         Product existingProduct = productRepository.findByName(name)
-                .orElseThrow(() -> new IllegalArgumentException("Product not found: " + name));
+                .orElseThrow(() -> new BusinessException("PRODUCT_NOT_FOUND", "Product not found: " + name, 404));
 
         updateProduct(existingProduct, desiredDTO);
 
         Product saved = productRepository.save(existingProduct);
         return mapper.toResponseDTO(saved);
     }
-
+    @Transactional
     public ProductResponseDTO updateProductByCode(String code, ProductRequestDTO desiredDTO) {
         Product existingProduct = productRepository.findByCode(code)
-                .orElseThrow(() -> new IllegalArgumentException("Product not found: " + code));
+                .orElseThrow(() -> new BusinessException("PRODUCT_NOT_FOUND", "Product not found: " + code, 404));
 
         updateProduct(existingProduct, desiredDTO);
 
@@ -150,9 +153,10 @@ public class ProductService {
     }
 
     //DELETE
+    @Transactional
     public void deleteProductByCode(String code) {
         if(!productRepository.existsByCode(code)) {
-            throw new IllegalArgumentException("Product not found: " + code);
+            throw new BusinessException("PRODUCT_NOT_FOUND", "Product not found: " + code, 404);
         }
         barcodeClient.deleteBarcode(code);
         productRepository.deleteByCode(code);
