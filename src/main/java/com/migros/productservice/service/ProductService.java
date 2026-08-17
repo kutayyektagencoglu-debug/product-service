@@ -112,7 +112,9 @@ public class ProductService {
     //UPDATE
     @Transactional
     public void updateProduct(Product existingProduct, ProductRequestDTO desiredDTO) {
-        //add method that checks whether categoryCode is valid
+        if(!existingProduct.getName().equals(desiredDTO.getName()) && productRepository.existsByName(desiredDTO.getName())) {
+            throw new BusinessException("PRODUCT_NAME_EXISTS", "Product name already exists", 409);
+        }
         existingProduct.setName(desiredDTO.getName());
         existingProduct.setBrand(desiredDTO.getBrand());
 
@@ -121,12 +123,12 @@ public class ProductService {
 
         String categoryCode = desiredDTO.getCategoryCode();
         if(!categoryCode.equals(existingProduct.getCategoryCode())) {
+            String oldCode = existingProduct.getCode();
             existingProduct.setCategoryCode(categoryCode);
             assignCode(existingProduct);
-
-            barcodeClient.deleteBarcode(existingProduct.getCode());
+            barcodeClient.deleteBarcode(oldCode);
             generateBarcode(existingProduct);
-        } else if(!(unit == desiredDTO.getUnit())) {
+        } else if(unit != desiredDTO.getUnit()) {
             barcodeClient.deleteBarcode(existingProduct.getCode());
             generateBarcode(existingProduct);
         }

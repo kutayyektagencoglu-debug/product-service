@@ -1,18 +1,28 @@
 package com.migros.productservice.unittest;
 
+import com.migros.commonerror.exception.BusinessException;
 import com.migros.productservice.Model.Product;
 import com.migros.productservice.client.BarcodeClient;
 import com.migros.productservice.client.CategoryClient;
+import com.migros.productservice.dto.ProductRequestDTO;
+import com.migros.productservice.dto.ProductResponseDTO;
 import com.migros.productservice.enums.UnitType;
 import com.migros.productservice.mapper.ProductMapper;
 import com.migros.productservice.repository.ProductRepository;
 import com.migros.productservice.service.ProductService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+
+import java.util.Optional;
+
+import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.*;
 
 
 @ExtendWith(MockitoExtension.class)
@@ -21,7 +31,7 @@ public class ProductServiceTest {
     @Mock
     private ProductRepository productRepository;
     @Mock
-    private ProductMapper productMapper;
+    private ProductMapper mapper;
     @Mock
     private CategoryClient categoryClient;
     @Mock
@@ -32,13 +42,135 @@ public class ProductServiceTest {
 
     private Product testProduct;
 
-    @BeforeEach
-    void setUp() {
-        testProduct = new Product();
-        testProduct.setId(1L);
-        testProduct.setName("Test Product");
-        testProduct.setBrand("Test Brand");
-        testProduct.setUnit(UnitType.KILOGRAM);
-        testProduct.setCategoryCode("MY");
+    //Create test
+    @Test
+    void createProductThrowsWhenNameExists() {
+        ProductRequestDTO dto = new ProductRequestDTO();
+        dto.setName("elma");
+
+        Product product = new Product();
+        product.setName("elma");
+
+        when(mapper.toEntity(dto)).thenReturn(product);
+        when(productRepository.existsByName("elma")).thenReturn(true);
+
+        assertThrows(BusinessException.class, () -> productService.createProduct(dto));
     }
+    @Test
+    void createProductThrowsWhenWrongCategoryCode() {
+        ProductRequestDTO dto = new ProductRequestDTO();
+        dto.setName("elma");
+        dto.setCategoryCode("MY");
+
+        Product product = new Product();
+        product.setName("elma");
+        product.setCategoryCode("MY");
+
+        when(mapper.toEntity(dto)).thenReturn(product);
+        when(productRepository.existsByName("elma")).thenReturn(false);
+
+        when(categoryClient.verifyCategoryCode("MY")).thenReturn(false);
+
+        assertThrows(BusinessException.class, () -> productService.createProduct(dto));
+    }
+
+    @Test
+    void createProductThrowsWhenHighCategoryNumber() {
+        ProductRequestDTO dto = new ProductRequestDTO();
+        dto.setName("elma");
+        dto.setCategoryCode("MY");
+
+        Product product = new Product();
+        product.setName("elma");
+        product.setCategoryCode("MY");
+
+        when(mapper.toEntity(dto)).thenReturn(product);
+        when(productRepository.existsByName("elma")).thenReturn(false);
+
+        when(categoryClient.verifyCategoryCode("MY")).thenReturn(true);
+        when(productRepository.findMaxCategoryNumber("MY")).thenReturn(999);
+
+        assertThrows(BusinessException.class, () -> productService.createProduct(dto));
+    }
+
+    @Test
+    void createProductSuccess() {
+        ProductRequestDTO dto = new ProductRequestDTO();
+        dto.setName("elma");
+        dto.setCategoryCode("MY");
+        dto.setUnit(UnitType.KILOGRAM);
+
+        Product product = new Product();
+        product.setName("elma");
+        product.setCategoryCode("MY");
+        product.setUnit(UnitType.KILOGRAM);
+
+        when(mapper.toEntity(dto)).thenReturn(product);
+        when(productRepository.existsByName("elma")).thenReturn(false);
+
+        when(categoryClient.verifyCategoryCode("MY")).thenReturn(true);
+        when(productRepository.findMaxCategoryNumber("MY")).thenReturn(0);
+
+        when(productRepository.save(any(Product.class))).thenReturn(product);
+        when(mapper.toResponseDTO(product)).thenReturn(new ProductResponseDTO());
+
+        ProductResponseDTO response = productService.createProduct(dto);
+
+        assertNotNull(response);
+        assertEquals(1, product.getCategoryNumber());
+        assertEquals("MY001", product.getCode());
+        verify(barcodeClient).createBarcode(any());
+        verify(productRepository).save(product);
+    }
+
+    //Update tests
+    @Test
+    void updateProductByCodeThrowsWhenCodeNotFound() {
+        String code = "MY001";
+
+        ProductRequestDTO dto = new ProductRequestDTO();
+
+        when(productRepository.findByCode("MY001")).thenReturn(Optional.empty());
+
+        assertThrows(BusinessException.class, () -> productService.updateProductByCode(code, dto));
+    }
+
+    @Test
+    void updateProductByCodeChangeNameBrandSuccess() {
+        String code = "MY001";
+
+        ProductRequestDTO desiredDTO = new ProductRequestDTO();
+        desiredDTO.setName("armut");
+        desiredDTO.setBrand("bca");
+        desiredDTO.setCategoryCode("MY");
+        desiredDTO.setUnit(UnitType.KILOGRAM);
+
+        Product existingProduct = new Product();
+        existingProduct.setName("elma");
+        existingProduct.setBrand("abc");
+        existingProduct.setCategoryCode("MY");
+        existingProduct.setUnit(UnitType.KILOGRAM);
+
+        when(productRepository.findByCode("MY001")).thenReturn(Optional.of(existingProduct));
+
+        when(productRepository.existsByName("armut")).thenReturn(false);
+
+        when(productRepository.save(any(Product.class))).thenReturn(existingProduct);
+        when(mapper.toResponseDTO(existingProduct)).thenReturn(new ProductResponseDTO());
+
+        ProductResponseDTO response = productService.updateProductByCode(code, desiredDTO);
+
+        assertNotNull(response);
+        assertEquals("armut", existingProduct.getName());
+        assertEquals("bca", existingProduct.getBrand());
+        verify(productRepository).save(existingProduct);
+        verify(barcodeClient, never()).deleteBarcode(any());
+        verify(barcodeClient, never()).createBarcode(any());
+    }
+
+    @Test
+    void updateProductByCodeChangeCategoryCodeSuccess() {}
+
+    @Test
+    void updateProductByCodeChangeUnitSuccess() {}
 }
