@@ -40,8 +40,6 @@ public class ProductServiceTest {
     @InjectMocks
     private ProductService productService;
 
-    private Product testProduct;
-
     //Create test
     @Test
     void createProductThrowsWhenNameExists() {
