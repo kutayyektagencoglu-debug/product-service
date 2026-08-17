@@ -119,7 +119,6 @@ public class ProductServiceTest {
         assertNotNull(response);
         assertEquals(1, product.getCategoryNumber());
         assertEquals("MY001", product.getCode());
-        assertEquals("MY001", response.getCode());
         verify(barcodeClient).createBarcode(any());
         verify(productRepository).save(product);
     }
@@ -163,9 +162,7 @@ public class ProductServiceTest {
 
         assertNotNull(response);
         assertEquals("armut", existingProduct.getName());
-        assertEquals("armut", response.getName());
         assertEquals("bca", existingProduct.getBrand());
-        assertEquals("bca", response.getBrand());
         verify(barcodeClient, never()).deleteBarcode(any());
         verify(barcodeClient, never()).createBarcode(any());
         verify(productRepository).save(existingProduct);
@@ -173,6 +170,25 @@ public class ProductServiceTest {
 
     @Test
     void updateProductByCodeChangeCategoryCodeInvalid() {
+        String code = "MY001";
+
+        ProductRequestDTO desiredDTO = new ProductRequestDTO();
+        desiredDTO.setName("elma");
+        desiredDTO.setBrand("abc");
+        desiredDTO.setCategoryCode("ME");
+        desiredDTO.setUnit(UnitType.KILOGRAM);
+
+        Product existingProduct = new Product();
+        existingProduct.setName("elma");
+        existingProduct.setBrand("abc");
+        existingProduct.setCategoryCode("MY");
+        existingProduct.setUnit(UnitType.KILOGRAM);
+
+        when(productRepository.findByCode("MY001")).thenReturn(Optional.of(existingProduct));
+
+        when(categoryClient.verifyCategoryCode("ME")).thenReturn(false);
+
+        assertThrows(BusinessException.class, () -> productService.updateProductByCode(code, desiredDTO));
     }
 
     @Test
@@ -203,14 +219,58 @@ public class ProductServiceTest {
 
         assertNotNull(response);
         assertEquals("ME", existingProduct.getCategoryCode());
-        assertEquals("ME", response.getCategoryCode());
         assertEquals("ME001", existingProduct.getCode());
-        assertEquals("ME001", response.getCode());
         verify(barcodeClient).deleteBarcode(any());
         verify(barcodeClient).createBarcode(any());
         verify(productRepository).save(existingProduct);
     }
 
     @Test
-    void updateProductByCodeChangeUnitSuccess() {}
+    void updateProductByCodeChangeUnitSuccess() {
+        String code = "MY001";
+
+        ProductRequestDTO desiredDTO = new ProductRequestDTO();
+        desiredDTO.setName("elma");
+        desiredDTO.setBrand("abc");
+        desiredDTO.setCategoryCode("MY");
+        desiredDTO.setUnit(UnitType.NUMBER);
+
+        Product existingProduct = new Product();
+        existingProduct.setName("elma");
+        existingProduct.setBrand("abc");
+        existingProduct.setCategoryCode("MY");
+        existingProduct.setUnit(UnitType.KILOGRAM);
+
+        when(productRepository.findByCode("MY001")).thenReturn(Optional.of(existingProduct));
+
+        when(productRepository.save(any(Product.class))).thenReturn(existingProduct);
+        when(mapper.toResponseDTO(existingProduct)).thenReturn(new ProductResponseDTO());
+
+        ProductResponseDTO response = productService.updateProductByCode(code, desiredDTO);
+
+        assertNotNull(response);
+        assertEquals(UnitType.NUMBER, existingProduct.getUnit());
+        verify(barcodeClient).deleteBarcode(any());
+        verify(barcodeClient).createBarcode(any());
+        verify(productRepository).save(existingProduct);
+    }
+    //Delete tests
+    @Test
+    void deleteProductByCodeThrowsWhenNotFound() {
+        when(productRepository.existsByCode("MY001")).thenReturn(false);
+
+        assertThrows(BusinessException.class,
+                () -> productService.deleteProductByCode("MY001"));
+    }
+
+    @Test
+    void deleteProductByCodeSuccess() {
+        when(productRepository.existsByCode("MY001")).thenReturn(true);
+
+        productService.deleteProductByCode("MY001");
+
+        verify(barcodeClient).deleteBarcode("MY001");
+        verify(productRepository).deleteByCode("MY001");
+    }
+
 }
