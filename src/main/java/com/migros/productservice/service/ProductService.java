@@ -35,7 +35,8 @@ public class ProductService {
             throw new BusinessException("INVALID_CATEGORY_CODE", "Category code is invalid", 400);
         }
         String categoryCode = product.getCategoryCode();
-        //ASSIGN CATEGORY CODE
+        //ASSIGN CATEGORY NUMBER
+        product.setCategoryNumber(0);
         int maxCategoryNumber = productRepository.findMaxCategoryNumber(categoryCode);
         int nextCategoryNumber = maxCategoryNumber + 1;
         if(nextCategoryNumber > 999) {
@@ -56,6 +57,7 @@ public class ProductService {
     //CREATE
     public ProductResponseDTO createProduct(ProductRequestDTO dto) {
         Product product = mapper.toEntity(dto);
+        System.out.println("Mapped categoryCode = " + product.getCategoryCode());
         if(productRepository.existsByName(product.getName())) {
             throw new BusinessException("PRODUCT_NAME_EXISTS", "Product name already exists", 409);
         }
